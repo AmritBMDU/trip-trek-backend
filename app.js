@@ -30,8 +30,8 @@ app.get("/", (req, res) => {
 
 app.listen(PORT, (error) => {
   if (error) {
-    console.log("❌ Error in stablish server: ", error);
+    console.log("Error in stablish server: ", error);
   } else {
-    console.log(`✅ Server is running on ${PORT} port number`);
+    console.log(`Server is running on ${PORT} port number`);
   }
 });
