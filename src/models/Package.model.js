@@ -5,7 +5,7 @@ const packageSchema = new Schema({
     image: { type: String, required: true },
     duration: { type: String, required: true },
     location: { type: String, required: true },
-    includes: [{ type: String }],
+    includes: { type: [String] },
     packageName: { type: String },
     mainPrice: { type: Number, required: true },
     discountPrice: { type: Number, required: true },

@@ -12,7 +12,17 @@ const addPackage = async (req, res) => {
                 return res.status(500).json({ success: false, message: "Image upload failed" });
             }
         }
-        const { image, duration, location, includes, packageName, mainPrice, discountPrice } = req.body;
+
+        if (typeof req.body.includes === 'string') {
+            try {
+                req.body.includes = JSON.parse(req.body.includes);
+            } catch (err) {
+                console.log(err)
+                return res.status(400).json({ success: false, message: "Invalid format for includes field" });
+            }
+        }
+
+        const { image, duration, location, packageName, includes, mainPrice, discountPrice } = req.body;
         if (!image || !duration || !location || !includes || !packageName || !mainPrice || !discountPrice) {
             return res.status(422).json({ success: false, message: "All fields are required" });
         }
@@ -58,6 +68,15 @@ const putPackage = async (req, res) => {
             } catch (error) {
                 console.error("Error uploading to Cloudinary:", error);
                 return res.status(500).json({ success: false, message: "Image upload failed" });
+            }
+        }
+
+        if (typeof req.body.includes === 'string') {
+            try {
+                req.body.includes = JSON.parse(req.body.includes);
+            } catch (err) {
+                console.log(err)
+                return res.status(400).json({ success: false, message: "Invalid format for includes field" });
             }
         }
         let isAnyFieldUpdated = false;
