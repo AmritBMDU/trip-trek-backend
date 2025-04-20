@@ -6,6 +6,7 @@ const packageSchema = new Schema({
     duration: { type: String, required: true },
     location: { type: String, required: true },
     includes: [{ type: String }],
+    packageName: { type: String },
     mainPrice: { type: Number, required: true },
     discountPrice: { type: Number, required: true },
 },
@@ -14,4 +15,4 @@ const packageSchema = new Schema({
     }
 );
 
-module.exports = mongoose.model("packageModel",packageSchema);
+module.exports = mongoose.model("packageModel", packageSchema);

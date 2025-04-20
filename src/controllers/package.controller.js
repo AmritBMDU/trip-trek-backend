@@ -3,21 +3,17 @@ const { uploadToCloudinary } = require("../middlewares/cloudinary.middleware");
 
 const addPackage = async (req, res) => {
     try {
-        console.log("data: ", req.body);
-        console.log("file: ", req.file);
         if (req.file) {
             try {
                 const result = await uploadToCloudinary(req.file);
                 req.body.image = result.secure_url;
-                console.log("url: ", result.secure_url)
             } catch (error) {
                 console.error("Error uploading to Cloudinary:", error);
                 return res.status(500).json({ success: false, message: "Image upload failed" });
             }
         }
-        console.log("data2nd: ", req.body);
-        const { image, duration, location, includes, mainPrice, discountPrice } = req.body;
-        if (!image || !duration || !location || !includes || !mainPrice || !discountPrice) {
+        const { image, duration, location, includes, packageName, mainPrice, discountPrice } = req.body;
+        if (!image || !duration || !location || !includes || !packageName || !mainPrice || !discountPrice) {
             return res.status(422).json({ success: false, message: "All fields are required" });
         }
         const newPackage = await PackageModel.create(req.body);
@@ -38,13 +34,23 @@ const getPackage = async (req, res) => {
     }
 };
 
+const getPackageById = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const packageData = await PackageModel.findById(id);
+        return res.status(200).json({ success: true, data: packageData });
+    } catch (error) {
+        console.error("Error in getPackage function:", error.message);
+        return res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 const putPackage = async (req, res) => {
     try {
         const id = req.params.id;
         if (!id) return res.status(400).json({ success: false, message: "id not found!" })
         const editPackage = await PackageModel.findById(id);
         if (!editPackage) return res.status(404).json({ success: false, message: "EditPackage not found!" })
-
         if (req.file) {
             try {
                 const result = await uploadToCloudinary(req.file);
@@ -90,7 +96,7 @@ const deletePackage = async (req, res) => {
 module.exports = {
     addPackage,
     getPackage,
+    getPackageById,
     putPackage,
     deletePackage,
-    
 };
