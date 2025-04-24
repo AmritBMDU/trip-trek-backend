@@ -109,7 +109,7 @@ const deletePackage = async (req, res) => {
         console.error("Error in updatePackage function:", error.message);
         return res.status(500).json({ success: false, message: "Server error" });
     }
-}
+};
 
 
 module.exports = {
