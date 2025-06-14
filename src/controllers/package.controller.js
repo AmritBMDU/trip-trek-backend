@@ -1,8 +1,10 @@
 const PackageModel = require("../models/Package.model");
 const { uploadToCloudinary } = require("../middlewares/cloudinary.middleware");
 
+
 const addPackage = async (req, res) => {
     try {
+        // Upload image
         if (req.file) {
             try {
                 const result = await uploadToCloudinary(req.file);
@@ -13,21 +15,47 @@ const addPackage = async (req, res) => {
             }
         }
 
-        if (typeof req.body.includes === 'string') {
-            try {
-                req.body.includes = JSON.parse(req.body.includes);
-            } catch (err) {
-                console.log(err)
-                return res.status(400).json({ success: false, message: "Invalid format for includes field" });
+        // Parse JSON fields if needed
+        const parseField = (fieldName) => {
+            if (req.body[fieldName] && typeof req.body[fieldName] === "string") {
+                try {
+                    req.body[fieldName] = JSON.parse(req.body[fieldName]);
+                } catch (err) {
+                    console.error(`Invalid format for ${fieldName}`);
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        const jsonFields = ["includes","SpecialtyTours", "inclusive", "exclusive", "notes", "cancellationPolicy", "itinerary"];
+        for (let field of jsonFields) {
+            if (!parseField(field)) {
+                return res.status(400).json({ success: false, message: `Invalid format for ${field} field` });
             }
         }
 
-        const { image, duration, location, packageName, includes, mainPrice, discountPrice } = req.body;
-        if (!image || !duration || !location || !includes || !packageName || !mainPrice || !discountPrice) {
-            return res.status(422).json({ success: false, message: "All fields are required" });
+        const {
+            image,
+            duration,
+            location,
+            includes,
+            SpecialtyTours,
+            packageName,
+            mainPrice,
+            discountPrice,
+        } = req.body;
+
+        // Required field validation
+        if (!image || !duration || !location || !packageName || !mainPrice || !discountPrice) {
+            return res.status(422).json({ success: false, message: "All required fields must be filled" });
         }
+
+        // Create and save the package
         const newPackage = await PackageModel.create(req.body);
+
         return res.status(201).json({ success: true, message: "Package added successfully", data: newPackage });
+
     } catch (error) {
         console.error("Error in addPackage function:", error.message);
         return res.status(500).json({ success: false, message: "Server error" });
