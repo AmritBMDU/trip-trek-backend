@@ -21,8 +21,10 @@ app.use(express.urlencoded({ extended: true }));
 // setup APIs
 const packageRouter = require("./src/routes/package.route");
 const leadRouter = require("./src/routes/lead.route");
+const blogRouter = require("./src/routes/blog.route");
 app.use("/api/v1/tt", packageRouter);
 app.use("/api/v1/tt", leadRouter);
+app.use("/api/v1/tt", blogRouter);
 
 app.get("/", (req, res) => {
   res.send("Your server is running");

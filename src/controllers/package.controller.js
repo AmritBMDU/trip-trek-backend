@@ -28,7 +28,7 @@ const addPackage = async (req, res) => {
             return true;
         };
 
-        const jsonFields = ["includes","SpecialtyTours", "inclusive", "exclusive", "notes", "cancellationPolicy", "itinerary"];
+        const jsonFields = ["includes", "SpecialtyTours", "inclusive", "exclusive", "notes", "cancellationPolicy", "itinerary"];
         for (let field of jsonFields) {
             if (!parseField(field)) {
                 return res.status(400).json({ success: false, message: `Invalid format for ${field} field` });
@@ -86,43 +86,77 @@ const getPackageById = async (req, res) => {
 const putPackage = async (req, res) => {
     try {
         const id = req.params.id;
-        if (!id) return res.status(400).json({ success: false, message: "id not found!" })
+        if (!id) {
+            return res.status(400).json({ success: false, message: "Package ID not found!" });
+        }
+
         const editPackage = await PackageModel.findById(id);
-        if (!editPackage) return res.status(404).json({ success: false, message: "EditPackage not found!" })
+        if (!editPackage) {
+            return res.status(404).json({ success: false, message: "Package not found!" });
+        }
+
+        // Upload image only if file is provided
         if (req.file) {
             try {
                 const result = await uploadToCloudinary(req.file);
                 req.body.image = result.secure_url;
             } catch (error) {
-                console.error("Error uploading to Cloudinary:", error);
+                console.error("Cloudinary upload error:", error);
                 return res.status(500).json({ success: false, message: "Image upload failed" });
             }
         }
 
-        if (typeof req.body.includes === 'string') {
-            try {
-                req.body.includes = JSON.parse(req.body.includes);
-            } catch (err) {
-                console.log(err)
-                return res.status(400).json({ success: false, message: "Invalid format for includes field" });
+        // These fields may come as JSON strings
+        const jsonFields = ["includes", "SpecialtyTours", "inclusive", "exclusive", "notes", "cancellationPolicy", "itinerary"];
+        for (let field of jsonFields) {
+            if (req.body[field] && typeof req.body[field] === "string") {
+                try {
+                    req.body[field] = JSON.parse(req.body[field]);
+                } catch (err) {
+                    return res.status(400).json({ success: false, message: `Invalid JSON format in '${field}'` });
+                }
             }
         }
+
+        // Update only non-empty, non-null, changed fields
         let isAnyFieldUpdated = false;
         Object.keys(req.body).forEach((key) => {
-            if (req.body[key] !== undefined && req.body[key] !== null && req.body[key].toString().trim() !== "") {
-                editPackage[key] = req.body[key];
-                isAnyFieldUpdated = true;
+            const newValue = req.body[key];
+
+            // Ignore undefined, null, or blank string values
+            const isValid =
+                newValue !== undefined &&
+                newValue !== null &&
+                !(typeof newValue === "string" && newValue.trim() === "");
+
+            if (isValid) {
+                const currentValue = editPackage[key];
+
+                // Compare deeply (for objects and arrays too)
+                const currentStr = JSON.stringify(currentValue);
+                const newStr = JSON.stringify(newValue);
+
+                if (currentStr !== newStr) {
+                    editPackage[key] = newValue;
+                    isAnyFieldUpdated = true;
+                }
             }
         });
 
-        if (!isAnyFieldUpdated) return res.status(400).json({ success: false, message: "No valid input fields provided" })
+        if (!isAnyFieldUpdated) {
+            return res.status(400).json({ success: false, message: "No valid input fields provided" });
+        }
+
         await editPackage.save();
-        return res.status(201).json({
-            message: "Package is updated Successfully",
-            success: true
-        })
+
+        return res.status(200).json({
+            success: true,
+            message: "Package updated successfully",
+            data: editPackage,
+        });
+
     } catch (error) {
-        console.error("Error in putPackage function:", error.message);
+        console.error("Error in putPackage:", error.message);
         return res.status(500).json({ success: false, message: "Server error" });
     }
 };
