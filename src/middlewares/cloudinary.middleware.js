@@ -56,8 +56,25 @@ const uploadToCloudinary = (file) => {
     });
 };
 
+// 5. Middleware: upload any files
+const uploadAny = () => {
+    return (req, res, next) => {
+        const uploader = upload.any(); // accepts any fieldname
+        uploader(req, res, function (err) {
+            if (err instanceof multer.MulterError) {
+                return res.status(400).json({ success: false, message: err.message });
+            } else if (err) {
+                return res.status(400).json({ success: false, message: err.message });
+            }
+            next();
+        });
+    };
+};
+
+
 module.exports = {
     uploadSingle,
+    uploadAny,
     uploadToCloudinary,
 };
 
